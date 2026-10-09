@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Cargar Diagnóstico{% endblock %}
+{% block page_title %}Emisión de Diagnóstico e Informe Sensorial{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card-gs">
+                <div class="card-gs-header">
+                    <h3 class="card-gs-title">
+                        <i class="ti ti-file-upload text-primary"></i> Subir Evaluación Sensorial
+                    </h3>
+                    <a href="{% url 'clinica:diagnosticos_especialista' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="ti ti-arrow-left"></i> Volver a fichas
+                    </a>
+                </div>
+                <div class="card-gs-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Paciente -->
+                        <div class="mb-3">
+                            <label class="form-label text-primary fw-bold text-uppercase small letter-spacing-1">
+                                <i class="ti ti-user"></i> Paciente
+                            </label>
+                            {{ form.paciente }}
+                            {% if form.paciente.errors %}<div class="text-danger small">{{ form.paciente.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <!-- Tipo de Diagnóstico y Título -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-primary fw-bold text-uppercase small letter-spacing-1">
+                                    <i class="ti ti-category"></i> Categoría del Diagnóstico
+                                </label>
+                                {{ form.tipo }}
+                                {% if form.tipo.errors %}<div class="text-danger small">{{ form.tipo.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-primary fw-bold text-uppercase small letter-spacing-1">
+                                    <i class="ti ti-heading"></i> Título del Informe
+                                </label>
+                                {{ form.titulo }}
+                                {% if form.titulo.errors %}<div class="text-danger small">{{ form.titulo.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Archivo PDF -->
+                        <div class="mb-3">
+                            <label class="form-label text-primary fw-bold text-uppercase small letter-spacing-1">
+                                <i class="ti ti-file-text"></i> Archivo Clínico Adjunto (PDF)
+                            </label>
+                            {{ form.archivo_pdf }}
+                            <div class="form-text small text-muted">
+                                Adjunta el documento en formato .pdf (máx. 10 MB). Si no se adjunta, se asociará el documento modelo de prueba del centro.
+                            </div>
+                            {% if form.archivo_pdf.errors %}<div class="text-danger small">{{ form.archivo_pdf.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <!-- Observaciones Clínicas -->
+                        <div class="mb-3">
+                            <label class="form-label text-primary fw-bold text-uppercase small letter-spacing-1">
+                                <i class="ti ti-notes"></i> Observaciones y Recomendaciones Clínicas
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}<div class="text-danger small">{{ form.observaciones.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <!-- Opciones y Checkboxes -->
+                        <div class="p-3 bg-light rounded-3 mb-4">
+                            <div class="form-check mb-2">
+                                {{ form.visible_para_paciente }}
+                                <label class="form-check-label small fw-bold text-primary" for="{{ form.visible_para_paciente.id_for_label }}">
+                                    Permitir que el paciente/tutor visualice y descargue este informe desde su Ficha Sensorial
+                                </label>
+                            </div>
+                            {% if cita_rel %}
+                            <div class="form-check">
+                                {{ form.marcar_realizada }}
+                                <label class="form-check-label small fw-bold text-success" for="{{ form.marcar_realizada.id_for_label }}">
+                                    Marcar la cita asociada (N° {{ cita_rel.id }}) como <span class="badge bg-success">Realizada</span> automáticamente
+                                </label>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'clinica:diagnosticos_especialista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-gs-primary">
+                                <i class="ti ti-device-floppy fs-5"></i> Guardar Diagnóstico
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

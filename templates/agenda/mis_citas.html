@@ -1,32 +1,168 @@
-{% extends "base.html" %}
-{% block titulo %}Mis citas{% endblock %}
-{% block contenido %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-  <h1 class="h3 mb-0">Mis citas</h1>
-  <a class="btn btn-primary" href="{% url 'agenda:especialistas' %}">Pedir hora</a>
-</div>
+{% extends 'base.html' %}
 
-{% for cita in citas %}
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between gap-2">
-      <div>
-        <h2 class="h6 mb-1">{{ cita.bloque.inicio|date:"l d-m-Y H:i" }}</h2>
-        <p class="mb-1">{{ cita.bloque.especialista }} · {{ cita.bloque.especialista.especialidad }}</p>
-        {% if cita.motivo_respuesta %}<p class="small text-muted mb-0">Motivo: {{ cita.motivo_respuesta }}</p>{% endif %}
-      </div>
-      <div>{% include "_estado.html" %}</div>
+{% block title %}Mis Citas{% endblock %}
+{% block page_title %}Historial de Atenciones del Paciente{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Citas Reservadas y Próximas -->
+    <div class="card-gs mb-4">
+        <div class="card-gs-header">
+            <h3 class="card-gs-title">
+                <i class="ti ti-calendar-event text-primary"></i> Citas Próximas & Solicitadas
+            </h3>
+            <a href="{% url 'agenda:especialistas' %}" class="btn btn-sm btn-gs-primary">
+                <i class="ti ti-calendar-plus"></i> Pedir Nueva Hora
+            </a>
+        </div>
+        <div class="card-gs-body">
+            {% if citas_proximas %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Especialista</th>
+                                <th>Motivo & Perfil Sensorial</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in citas_proximas %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-primary">{{ c.bloque.inicio|date:"d M Y" }}</div>
+                                        <div class="text-muted small"><i class="ti ti-clock"></i> {{ c.bloque.inicio|time:"H:i" }} hrs</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ c.bloque.especialista.nombre_completo_con_titulo }}</div>
+                                        <div class="text-muted small">{{ c.bloque.especialista.especialidad }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ c.motivo_consulta }}</div>
+                                        {% if c.mensaje_sensorial %}
+                                            <div class="text-muted small text-truncate" style="max-width:300px;" title="{{ c.mensaje_sensorial }}">
+                                                <i class="ti ti-info-circle text-primary"></i> {{ c.mensaje_sensorial }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if c.estado == "CONFIRMADA" %}
+                                            <span class="badge bg-success"><i class="ti ti-check"></i> Confirmada</span>
+                                        {% else %}
+                                            <span class="badge bg-primary"><i class="ti ti-clock"></i> Solicitada</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <!-- Modal de Cancelación -->
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelar{{ c.id }}">
+                                            <i class="ti ti-x"></i> Cancelar
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- MODAL CANCELAR PACIENTE -->
+                                <div class="modal fade" id="modalCancelar{{ c.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content border-danger">
+                                            <form method="post" action="{% url 'agenda:cancelar' c.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-header bg-danger bg-opacity-10">
+                                                    <h5 class="modal-title font-serif fw-bold text-danger">Cancelar Cita N° {{ c.id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="small text-muted mb-2">
+                                                        Cita con: <strong>{{ c.bloque.especialista.nombre_completo_con_titulo }}</strong><br>
+                                                        Fecha: <strong>{{ c.bloque.inicio|date:"d-m-Y H:i" }} hrs</strong>
+                                                    </p>
+                                                    <div class="alert alert-warning py-2 small mb-3">
+                                                        <i class="ti ti-alert-triangle"></i> Recuerda que las cancelaciones deben realizarse con al menos 24 horas de anticipación.
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-bold">Motivo de la cancelación (Obligatorio):</label>
+                                                        <textarea name="motivo" class="form-control" rows="3" placeholder="Indica el motivo por el cual cancelas la cita..." required></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Volver</button>
+                                                    <button type="submit" class="btn btn-sm btn-danger">Confirmar Cancelación</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="ti ti-calendar-off fs-1 text-muted d-block mb-2"></i>
+                    <p class="text-muted mb-2">No tienes citas próximas agendadas actualmente.</p>
+                    <a href="{% url 'agenda:especialistas' %}" class="btn btn-sm btn-gs-primary">
+                        <i class="ti ti-calendar-plus"></i> Pedir una Hora
+                    </a>
+                </div>
+            {% endif %}
+        </div>
     </div>
-    {% if cita.esta_activa %}
-    <form method="post" action="{% url 'agenda:cancelar' cita.id %}" class="row g-2 mt-2">
-      {% csrf_token %}
-      <div class="col-sm-8"><input class="form-control form-control-sm" name="motivo" placeholder="Motivo de la cancelación" maxlength="300" required></div>
-      <div class="col-sm-4"><button class="btn btn-outline-danger btn-sm w-100">Cancelar cita</button></div>
-    </form>
-    {% endif %}
-  </div>
+
+    <!-- Citas Anteriores -->
+    <div class="card-gs">
+        <div class="card-gs-header">
+            <h3 class="card-gs-title">
+                <i class="ti ti-history text-muted"></i> Citas Pasadas e Historial
+            </h3>
+        </div>
+        <div class="card-gs-body">
+            {% if citas_pasadas %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Especialista</th>
+                                <th>Motivo</th>
+                                <th>Estado</th>
+                                <th>Respuesta / Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in citas_pasadas %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ c.bloque.inicio|date:"d M Y" }}</div>
+                                        <div class="text-muted small">{{ c.bloque.inicio|time:"H:i" }} hrs</div>
+                                    </td>
+                                    <td>{{ c.bloque.especialista.nombre_completo_con_titulo }}</td>
+                                    <td>{{ c.motivo_consulta }}</td>
+                                    <td>
+                                        {% if c.estado == "REALIZADA" %}
+                                            <span class="badge bg-secondary"><i class="ti ti-check"></i> Realizada</span>
+                                        {% elif c.estado == "CANCELADA" %}
+                                            <span class="badge bg-danger"><i class="ti ti-ban"></i> Cancelada</span>
+                                        {% elif c.estado == "RECHAZADA" %}
+                                            <span class="badge bg-dark"><i class="ti ti-x"></i> Rechazada</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">{{ c.get_estado_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-muted">
+                                        {{ c.motivo_respuesta|default:"-" }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-3 text-muted">
+                    No se registran citas pasadas.
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
-{% empty %}
-<p>Aún no tienes citas.</p>
-{% endfor %}
 {% endblock %}

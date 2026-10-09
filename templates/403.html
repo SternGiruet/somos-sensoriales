@@ -1,9 +1,23 @@
-{% extends "base.html" %}
-{% block titulo %}Acceso denegado{% endblock %}
-{% block contenido %}
-<div class="text-center mt-5">
-  <h1 class="h3">Acceso denegado</h1>
-  <p>No tienes permiso para ver esta página. El intento quedó registrado.</p>
-  <a class="btn btn-primary" href="{% url 'inicio' %}">Volver al inicio</a>
-</div>
-{% endblock %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso no autorizado · Gestión Sensorial</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+</head>
+<body class="bg-light d-flex align-items-center min-vh-100">
+  <div class="container text-center py-5">
+    <div class="card-gs p-4 mx-auto shadow-sm" style="max-width: 500px;">
+      <h1 class="display-4 text-danger fw-bold">403</h1>
+      <h2 class="h5 fw-bold text-primary mb-3">Acceso Denegado</h2>
+      <p class="text-muted small mb-4">
+        No tienes permisos para acceder a este recurso. El intento ha sido registrado en el log de auditoría del sistema (Ley 21.459).
+      </p>
+      <a class="btn btn-gs-primary btn-sm" href="{% url 'inicio' %}">Volver al panel principal</a>
+    </div>
+  </div>
+</body>
+</html>

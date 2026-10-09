@@ -1,12 +1,5 @@
 """
-Patrón Observer: la señal (evento) que se "publica" cada vez que una cita cambia.
-
-Usamos las señales (signals) que ya trae Django. Quien publica es el modelo
-Cita (agenda/models.py). Quienes escuchan ("observadores") son:
-    - notificaciones/receptores.py -> avisa a la otra persona
-    - usuarios/receptores.py       -> guarda el cambio en la auditoría
-
-Datos que viajan con la señal: cita, accion (texto) y actor (quién hizo el cambio).
+Patrón Observer: Señal publicada cada vez que el estado de una cita médica cambia.
 """
 from django.dispatch import Signal
 

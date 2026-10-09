@@ -1,34 +1,114 @@
-{% extends "base.html" %}
-{% block titulo %}Crear cuenta{% endblock %}
-{% block contenido %}
-<div class="row justify-content-center mt-4">
-  <div class="col-md-8 col-lg-6">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h4 mb-3">Crear cuenta de paciente</h1>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          {% for campo in form %}
-            {% if campo.name == "acepta_datos" %}
-              <div class="form-check mb-3">
-                {{ campo }}
-                <label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-                {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-              </div>
-            {% else %}
-              <div class="mb-3">
-                <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-                {{ campo }}
-                {% if campo.help_text %}<div class="form-text">{{ campo.help_text|safe }}</div>{% endif %}
-                {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-              </div>
-            {% endif %}
-          {% endfor %}
-          <button class="btn btn-primary w-100">Crear cuenta</button>
-        </form>
-        <p class="text-center mt-3 mb-0"><a href="{% url 'usuarios:login' %}">Ya tengo cuenta</a></p>
-      </div>
-    </div>
-  </div>
-</div>
+{% extends 'base_auth.html' %}
+
+{% block title %}Registro de Paciente{% endblock %}
+
+{% block auth_header_sub %}
+    <h2 class="h4 mb-1 text-white font-serif">Crear Cuenta</h2>
+    <p class="text-white-50 small mb-0">Completa tus datos para tu atención sensorial personalizada</p>
+{% endblock %}
+
+{% block auth_content %}
+    <form method="post" action="{% url 'usuarios:registro' %}" class="mt-2">
+        {% csrf_token %}
+
+        <h6 class="text-primary fw-bold text-uppercase small letter-spacing-1 border-bottom pb-1 mb-3">
+            <i class="ti ti-id"></i> Datos Personales
+        </h6>
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Nombre</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Apellido</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+            <div class="col-7">
+                <label class="form-label text-muted small fw-bold mb-1">Correo Electrónico</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-5">
+                <label class="form-label text-muted small fw-bold mb-1">RUT</label>
+                {{ form.rut }}
+                {% if form.rut.errors %}<div class="text-danger small">{{ form.rut.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+            <div class="col-8">
+                <label class="form-label text-muted small fw-bold mb-1">Dirección</label>
+                {{ form.direccion }}
+            </div>
+            <div class="col-4">
+                <label class="form-label text-muted small fw-bold mb-1">Edad</label>
+                {{ form.edad }}
+            </div>
+        </div>
+
+        <h6 class="text-primary fw-bold text-uppercase small letter-spacing-1 border-bottom pb-1 mt-3 mb-3">
+            <i class="ti ti-phone"></i> Contacto y Tutor
+        </h6>
+        <div class="mb-2">
+            <label class="form-label text-muted small fw-bold mb-1">Teléfono Paciente</label>
+            {{ form.telefono }}
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Nombre del Tutor</label>
+                {{ form.nombre_tutor }}
+            </div>
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Teléfono Tutor (Opcional)</label>
+                {{ form.telefono_tutor }}
+            </div>
+        </div>
+
+        <h6 class="text-primary fw-bold text-uppercase small letter-spacing-1 border-bottom pb-1 mt-3 mb-3">
+            <i class="ti ti-lock"></i> Seguridad y Ficha Médica
+        </h6>
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Contraseña</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold mb-1">Repetir Contraseña</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold mb-1">
+                PIN de 4 dígitos para Ficha Sensorial (Confidencial)
+            </label>
+            {{ form.pin_seguridad }}
+            <span class="text-muted" style="font-size:0.75rem;">Protege la consulta de tus informes diagnósticos y evaluaciones.</span>
+            {% if form.pin_seguridad.errors %}<div class="text-danger small">{{ form.pin_seguridad.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-check mb-3">
+            {{ form.acepta_datos }}
+            <label class="form-check-label small text-muted" for="{{ form.acepta_datos.id_for_label }}">
+                Acepto el uso de mis datos personales de salud conforme a las Leyes 19.628 y 21.719
+            </label>
+            {% if form.acepta_datos.errors %}<div class="text-danger small">{{ form.acepta_datos.errors.0 }}</div>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
+            <i class="ti ti-user-plus fs-5"></i> Crear Mi Cuenta
+        </button>
+
+        <div class="text-center small text-muted">
+            ¿Ya tienes una cuenta registrada? 
+            <a href="{% url 'usuarios:login' %}" class="fw-bold text-primary text-decoration-none">Inicia sesión</a>
+        </div>
+    </form>
 {% endblock %}

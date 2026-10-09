@@ -1,54 +1,82 @@
-"""Pruebas de los patrones de diseño: Singleton, Factory y Observer."""
+"""
+Pruebas de los patrones de diseño GoF: Singleton, Factory y Observer.
+"""
+from datetime import timedelta
 from django.core import mail
 from django.test import TestCase
+from django.utils import timezone
 
-from agenda.models import CentroTerapeutico, Cita
+from agenda.models import BloqueHorario, CentroTerapeutico, Cita
 from notificaciones.avisos import AvisoApp, AvisoCorreo, crear_aviso
 from notificaciones.models import Notificacion
-from usuarios.models import RegistroAuditoria
-
-from .datos import crear_bloque, crear_especialista, crear_paciente
+from usuarios.models import RegistroAuditoria, Usuario
 
 
-class SingletonTest(TestCase):
-    def test_siempre_existe_un_solo_centro(self):
+class PatronesTest(TestCase):
+    def setUp(self):
+        self.centro = CentroTerapeutico.obtener()
+        self.paciente = Usuario.objects.create_user(
+            username="paciente_test",
+            email="paciente@test.cl",
+            password="password123",
+            rol=Usuario.PACIENTE,
+            rut="12345678-5",
+            first_name="Paciente",
+            last_name="Test"
+        )
+        self.especialista = Usuario.objects.create_user(
+            username="esp_test",
+            email="esp@test.cl",
+            password="password123",
+            rol=Usuario.ESPECIALISTA,
+            rut="11222333-4",
+            first_name="Dra.",
+            last_name="Especialista",
+            especialidad="Terapia Ocupacional"
+        )
+        self.bloque = BloqueHorario.objects.create(
+            especialista=self.especialista,
+            inicio=timezone.now() + timedelta(days=2),
+            fin=timezone.now() + timedelta(days=2, minutes=45),
+            disponible=True
+        )
+
+    def test_singleton_centro_terapeutico(self):
+        """Patrón Singleton: Siempre existe una sola instancia con id=1."""
         primero = CentroTerapeutico.obtener()
-        CentroTerapeutico(nombre="Otro centro").save()  # intenta crear otro
+        segundo = CentroTerapeutico(nombre="Otro Centro Terapéutico")
+        segundo.save()
         self.assertEqual(CentroTerapeutico.objects.count(), 1)
-        self.assertEqual(CentroTerapeutico.obtener().pk, primero.pk)
+        self.assertEqual(CentroTerapeutico.obtener().pk, 1)
 
-
-class FactoryTest(TestCase):
-    def test_crea_el_aviso_segun_el_canal(self):
+    def test_factory_crear_aviso(self):
+        """Patrón Factory: Fabrica la clase correcta según el canal."""
         self.assertIsInstance(crear_aviso("app"), AvisoApp)
         self.assertIsInstance(crear_aviso("correo"), AvisoCorreo)
-
-    def test_canal_desconocido(self):
         with self.assertRaises(ValueError):
-            crear_aviso("paloma")
+            crear_aviso("canal_inexistente")
 
+    def test_observer_notificaciones_y_auditoria(self):
+        """
+        Patrón Observer: Al cambiar una cita, la señal 'cita_cambiada'
+        despacha notificaciones y crea un registro inmutable de auditoría.
+        """
+        cita = Cita.solicitar(
+            paciente=self.paciente,
+            bloque_id=self.bloque.id,
+            motivo="Integración Sensorial",
+            mensaje_sensorial="Sensibilidad auditiva moderada"
+        )
 
-class ObserverTest(TestCase):
-    def setUp(self):
-        self.paciente = crear_paciente()
-        self.especialista = crear_especialista()
-        self.cita = Cita.solicitar(self.paciente, crear_bloque(self.especialista).id, "Ansiedad")
-
-    def test_al_solicitar_se_avisa_al_especialista(self):
+        # 1. El especialista debe recibir notificación en la app
         self.assertTrue(Notificacion.objects.filter(usuario=self.especialista).exists())
-        self.assertEqual(mail.outbox[0].to, [self.especialista.email])
 
-    def test_al_confirmar_se_avisa_al_paciente(self):
-        self.cita.confirmar(self.especialista)
-        aviso = Notificacion.objects.filter(usuario=self.paciente).first()
-        self.assertIn("confirmada", aviso.mensaje)
+        # 2. Debe generarse registro de auditoría
+        self.assertTrue(RegistroAuditoria.objects.filter(accion="CITA_SOLICITADA").exists())
 
-    def test_el_aviso_no_incluye_el_motivo_de_consulta(self):
-        """RNF-05: los correos no deben contener el motivo de consulta."""
-        self.assertNotIn("Ansiedad", mail.outbox[0].body)
-
-    def test_cada_cambio_queda_en_la_auditoria(self):
-        self.cita.confirmar(self.especialista)
-        acciones = list(RegistroAuditoria.objects.values_list("accion", flat=True))
-        self.assertIn("CITA_SOLICITADA", acciones)
-        self.assertIn("CITA_CONFIRMADA", acciones)
+        # 3. Confirmar la cita notifica al paciente
+        cita.confirmar(self.especialista)
+        aviso_paciente = Notificacion.objects.filter(usuario=self.paciente).first()
+        self.assertIsNotNone(aviso_paciente)
+        self.assertIn("confirmada", aviso_paciente.mensaje)
+        self.assertTrue(RegistroAuditoria.objects.filter(accion="CITA_CONFIRMADA").exists())

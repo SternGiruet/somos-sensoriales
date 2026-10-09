@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Ficha del Paciente{% endblock %}
+{% block page_title %}Ficha Clínica Sensorial (Acceso Confidencial){% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% if not ficha_desbloqueada %}
+                <!-- VISTA PROTEGIDA POR PIN GATE (MOCKUP DE CLAUDE) -->
+                <div class="card-gs shadow-sm text-center py-4 px-3">
+                    <div class="card-gs-body max-w-500 mx-auto" style="max-width: 460px;">
+                        <div class="d-inline-flex p-3 bg-primary bg-opacity-10 text-primary rounded-circle mb-3">
+                            <i class="ti ti-lock-access fs-1"></i>
+                        </div>
+                        <h3 class="h4 font-serif fw-bold text-primary mb-2">Acceso Protegido por PIN</h3>
+                        <p class="text-muted small mb-4">
+                            Los diagnósticos y registros sensoriales contienen información médica confidencial. Ingresa tu PIN de 4 dígitos para acceder a la ficha.
+                        </p>
+
+                        {% if pin_error %}
+                            <div class="alert alert-danger py-2 small d-flex align-items-center justify-content-center gap-2 mb-3">
+                                <i class="ti ti-alert-circle"></i> PIN incorrecto. Intenta nuevamente (Demo: 1234).
+                            </div>
+                        {% endif %}
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="desbloquear">
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold text-uppercase letter-spacing-1">
+                                    Ingresa PIN de 4 Dígitos
+                                </label>
+                                <input type="password" name="pin" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required 
+                                       class="form-control form-control-lg text-center fs-2 fw-bold letter-spacing-2 mx-auto" 
+                                       style="max-width: 200px; letter-spacing: 0.5rem;" placeholder="••••" autofocus>
+                                <span class="text-muted small d-block mt-2">PIN predeterminado para demo: <strong>1234</strong></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-gs-primary w-100 justify-content-center py-2">
+                                <i class="ti ti-lock-open fs-5"></i> Desbloquear y Ver Ficha
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <!-- VISTA DESBLOQUEADA DE ANTECEDENTES Y DIAGNÓSTICOS PDF -->
+                <div class="card-gs mb-4">
+                    <div class="card-gs-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="user-avatar-circle" style="width:48px; height:48px; font-size:1.1rem; background-color: {{ usuario.color_avatar }};">
+                                {{ usuario.iniciales }}
+                            </div>
+                            <div>
+                                <h3 class="card-gs-title mb-0">{{ usuario.nombre_completo_con_titulo }}</h3>
+                                <span class="badge bg-success bg-opacity-15 text-success small">Paciente Activo/a · Ficha Desbloqueada</span>
+                            </div>
+                        </div>
+
+                        <!-- Botón Bloquear Ficha -->
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="bloquear">
+                            <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
+                                <i class="ti ti-lock"></i> Bloquear Ficha
+                            </button>
+                        </form>
+                    </div>
+                    <div class="card-gs-body">
+                        <h5 class="h6 text-uppercase fw-bold text-primary letter-spacing-1 mb-3">
+                            <i class="ti ti-id"></i> Antecedentes Personales del Paciente
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">Nombre Completo:</span>
+                                <strong>{{ usuario.get_full_name }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">RUT:</span>
+                                <strong>{{ usuario.rut|default:"No informado" }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">Correo Electrónico:</span>
+                                <strong>{{ usuario.email }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">Teléfono Paciente:</span>
+                                <strong>{{ usuario.telefono|default:"No informado" }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">Tutor / Familiar Responsable:</span>
+                                <strong>{{ usuario.nombre_tutor|default:"María Pérez" }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small d-block">Teléfono del Tutor:</span>
+                                <strong>{{ usuario.telefono_tutor|default:"+56 9 8765 4321" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informes Diagnósticos y Evaluaciones con PDF -->
+                <div class="card-gs">
+                    <div class="card-gs-header">
+                        <h4 class="card-gs-title fs-6">
+                            <i class="ti ti-file-certificate text-primary"></i> Informes de Diagnóstico Sensorial ({{ diagnosticos.count }})
+                        </h4>
+                    </div>
+                    <div class="card-gs-body">
+                        {% if diagnosticos %}
+                            <div class="list-group list-group-flush">
+                                {% for d in diagnosticos %}
+                                    <div class="list-group-item px-0 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                                        <div>
+                                            <div class="fw-bold text-primary d-flex align-items-center gap-2">
+                                                <i class="ti ti-file-description text-primary fs-5"></i>
+                                                {{ d.titulo }}
+                                            </div>
+                                            <div class="text-muted small">
+                                                <span>Tipo: <strong>{{ d.tipo }}</strong></span> · 
+                                                <span>Fecha de Emisión: {{ d.fecha_emision|date:"d M Y" }}</span>
+                                                {% if d.especialista %}
+                                                    · <span>Por: {{ d.especialista.nombre_completo_con_titulo }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% if d.observaciones %}
+                                                <p class="text-muted small mb-0 mt-1 fst-italic">"{{ d.observaciones }}"</p>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if d.archivo_pdf %}
+                                                <a href="{{ d.archivo_pdf.url }}" target="_blank" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm">
+                                                    <i class="ti ti-download"></i> Descargar PDF
+                                                </a>
+                                            {% else %}
+                                                <span class="badge bg-light text-muted">Sin documento</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-file-off fs-1 d-block mb-2"></i>
+                                No hay informes sensoriales registrados todavía para esta ficha.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

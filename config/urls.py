@@ -1,4 +1,6 @@
-"""Rutas principales del sitio. Cada app tiene además su propio urls.py."""
+"""Rutas principales del sistema unificado Gestión Sensorial."""
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -10,9 +12,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("cuentas/", include("usuarios.urls")),
     path("agenda/", include("agenda.urls")),
+    path("clinica/", include("clinica.urls")),
     path("avisos/", include("notificaciones.urls")),
 ]
 
-# Vista propia para el error 403: además de mostrar la página,
-# deja registrado el intento de acceso en la auditoría.
+# Manejador propio de error 403 con auditoría de seguridad
 handler403 = "usuarios.views.acceso_denegado"
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

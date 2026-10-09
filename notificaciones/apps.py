@@ -4,8 +4,8 @@ from django.apps import AppConfig
 class NotificacionesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "notificaciones"
-    verbose_name = "Avisos"
+    verbose_name = "Notificaciones y Alertas"
 
     def ready(self):
-        # Suscribe el observador de avisos a la señal cita_cambiada.
-        from . import receptores  # noqa: F401
+        # Conecta el receptor a la señal de cambio de citas
+        import notificaciones.receptores  # noqa: F401

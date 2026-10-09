@@ -1,15 +1,45 @@
 {% extends "base.html" %}
-{% block titulo %}Avisos{% endblock %}
-{% block contenido %}
-<h1 class="h3 mb-3">Avisos</h1>
-<ul class="list-group">
-  {% for aviso in avisos %}
-  <li class="list-group-item d-flex justify-content-between gap-2">
-    <span>{% if not aviso.leida %}<span class="badge text-bg-primary me-1">Nuevo</span>{% endif %}{{ aviso.mensaje }}</span>
-    <small class="text-muted text-nowrap">{{ aviso.fecha|date:"d-m H:i" }}</small>
-  </li>
-  {% empty %}
-  <li class="list-group-item">No tienes avisos.</li>
-  {% endfor %}
-</ul>
+
+{% block title %}Avisos y Notificaciones{% endblock %}
+{% block page_title %}Buzón de Avisos y Notificaciones del Sistema{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card-gs">
+      <div class="card-gs-header">
+        <h4 class="card-gs-title fs-6">
+          <i class="ti ti-bell text-primary"></i> Tus Avisos Recientes
+        </h4>
+      </div>
+      <div class="card-gs-body">
+        {% if avisos %}
+          <div class="list-group list-group-flush">
+            {% for a in avisos %}
+              <div class="list-group-item px-0 py-3 d-flex align-items-start gap-3">
+                <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-circle flex-shrink-0">
+                  <i class="ti ti-info-circle fs-5"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted">{{ a.fecha|date:"d-m-Y H:i" }}</span>
+                    {% if not a.leida %}
+                      <span class="badge bg-primary">Nuevo</span>
+                    {% endif %}
+                  </div>
+                  <p class="mb-0 text-dark">{{ a.mensaje }}</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="ti ti-bell-off fs-1 d-block mb-2"></i>
+            No tienes avisos registrados.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

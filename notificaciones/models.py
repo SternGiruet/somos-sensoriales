@@ -3,8 +3,7 @@ from django.db import models
 
 
 class Notificacion(models.Model):
-    """Aviso que la persona ve dentro de la aplicación (RF-11)."""
-
+    """Aviso recibido dentro de la plataforma por el usuario (RF-11)."""
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notificaciones"
     )
@@ -14,8 +13,8 @@ class Notificacion(models.Model):
 
     class Meta:
         ordering = ["-fecha"]
-        verbose_name = "aviso"
-        verbose_name_plural = "avisos"
+        verbose_name = "notificación"
+        verbose_name_plural = "notificaciones"
 
     def __str__(self):
-        return self.mensaje
+        return f"{self.usuario} | {self.mensaje[:40]}..."

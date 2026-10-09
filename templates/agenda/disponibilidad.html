@@ -1,40 +1,97 @@
-{% extends "base.html" %}
-{% block titulo %}Mis horarios{% endblock %}
-{% block contenido %}
-<h1 class="h3 mb-3">Mis horarios</h1>
-<div class="card mb-4">
-  <div class="card-body">
-    <h2 class="h5">Publicar un bloque de 45 minutos</h2>
-    <form method="post" class="row g-2 align-items-end">
-      {% csrf_token %}
-      <div class="col-sm-8">
-        <label class="form-label" for="{{ form.inicio.id_for_label }}">{{ form.inicio.label }}</label>
-        {{ form.inicio }}
-        {% for error in form.inicio.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-      </div>
-      <div class="col-sm-4"><button class="btn btn-primary w-100">Publicar</button></div>
-    </form>
-  </div>
-</div>
+{% extends 'base.html' %}
 
-<h2 class="h5">Próximos bloques</h2>
-<ul class="list-group">
-  {% for bloque in bloques %}
-  <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <span>{{ bloque.inicio|date:"l d-m-Y H:i" }} a {{ bloque.fin|time:"H:i" }}</span>
-    {% if bloque.disponible %}
-      <span class="d-flex gap-2 align-items-center">
-        <span class="badge text-bg-success">Libre</span>
-        <form method="post" action="{% url 'agenda:eliminar_bloque' bloque.id %}">
-          {% csrf_token %}<button class="btn btn-outline-danger btn-sm">Eliminar</button>
-        </form>
-      </span>
-    {% else %}
-      <span class="badge text-bg-secondary">Reservado</span>
-    {% endif %}
-  </li>
-  {% empty %}
-  <li class="list-group-item">Aún no publicas horarios.</li>
-  {% endfor %}
-</ul>
+{% block title %}Disponibilidad Horaria{% endblock %}
+{% block page_title %}Gestión de Bloques Horarios (45 Minutos){% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Formulario de Publicación de Bloques -->
+    <div class="col-lg-5">
+        <div class="card-gs">
+            <div class="card-gs-header">
+                <h4 class="card-gs-title fs-6">
+                    <i class="ti ti-calendar-plus text-primary"></i> Publicar Nuevo Bloque de Atención
+                </h4>
+            </div>
+            <div class="card-gs-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-primary text-uppercase letter-spacing-1">
+                            Fecha y Hora de Inicio
+                        </label>
+                        {{ form.inicio }}
+                        {% if form.inicio.errors %}
+                            <div class="text-danger small mt-1">{{ form.inicio.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text small text-muted">
+                            La duración del bloque se calcula automáticamente a 45 minutos.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-gs-primary w-100 justify-content-center">
+                        <i class="ti ti-plus"></i> Publicar Horario en la Agenda
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Bloques Publicados -->
+    <div class="col-lg-7">
+        <div class="card-gs">
+            <div class="card-gs-header">
+                <h4 class="card-gs-title fs-6">
+                    <i class="ti ti-list text-primary"></i> Bloques Futuros Publicados ({{ bloques.count }})
+                </h4>
+            </div>
+            <div class="card-gs-body">
+                {% if bloques %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Horario</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in bloques %}
+                                    <tr>
+                                        <td class="fw-bold">{{ b.inicio|date:"d-m-Y" }}</td>
+                                        <td>{{ b.inicio|time:"H:i" }} - {{ b.fin|time:"H:i" }} hrs</td>
+                                        <td>
+                                            {% if b.disponible %}
+                                                <span class="badge bg-success">Disponible</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Reservado</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if b.disponible %}
+                                            <form method="post" action="{% url 'agenda:eliminar_bloque' b.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="return confirm('¿Eliminar este bloque horario?')">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                                <span class="text-muted small">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        No tienes bloques horarios futuros publicados.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

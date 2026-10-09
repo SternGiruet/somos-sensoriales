@@ -1,25 +1,60 @@
-{% extends "base.html" %}
-{% block titulo %}Iniciar sesión{% endblock %}
-{% block contenido %}
-<div class="row justify-content-center mt-5">
-  <div class="col-sm-10 col-md-6 col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h4 text-center mb-1">Somos Sensoriales</h1>
-        <p class="text-center text-muted mb-4">Reserva de horas</p>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          {% for campo in form %}
-            <div class="mb-3">
-              <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-              {{ campo }}
+{% extends 'base_auth.html' %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block auth_header_sub %}
+    <h2 class="h4 mb-1 text-white font-serif">Bienvenido/a</h2>
+    <p class="text-white-50 small mb-0">Inicia sesión en tu cuenta para acceder a tu gestión sensorial</p>
+{% endblock %}
+
+{% block auth_content %}
+    <form method="post" action="{% url 'usuarios:login' %}" class="mt-2">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label text-primary fw-bold small text-uppercase letter-spacing-1">
+                <i class="ti ti-mail"></i> Correo Electrónico o Usuario
+            </label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label text-primary fw-bold small text-uppercase letter-spacing-1 mb-0">
+                    <i class="ti ti-lock"></i> Contraseña
+                </label>
+                <a href="#" class="text-muted small text-decoration-none">¿Olvidaste tu contraseña?</a>
             </div>
-          {% endfor %}
-          <button class="btn btn-primary w-100">Entrar</button>
-        </form>
-        <p class="text-center mt-3 mb-0">¿No tienes cuenta? <a href="{% url 'usuarios:registro' %}">Regístrate</a></p>
-      </div>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
+            <i class="ti ti-login fs-5"></i> Ingresar a la Plataforma
+        </button>
+
+        <div class="text-center small text-muted">
+            ¿No tienes cuenta registrada? 
+            <a href="{% url 'usuarios:registro' %}" class="fw-bold text-primary text-decoration-none">Regístrate aquí</a>
+        </div>
+    </form>
+
+    <!-- Caja de Accesos Rápidos para Evaluación Demo -->
+    <div class="demo-box mt-4">
+        <div class="text-muted fw-bold small mb-2 text-uppercase letter-spacing-1">
+            <i class="ti ti-sparkles text-warning"></i> Atajos Demo para Evaluación
+        </div>
+        <div class="d-grid gap-2">
+            <a href="{% url 'usuarios:demo_paciente' %}" class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="ti ti-user"></i> Entrar como Camila Rojas (Paciente)
+            </a>
+            <a href="{% url 'usuarios:demo_especialista' %}" class="btn btn-sm btn-outline-dark d-flex align-items-center justify-content-center gap-2">
+                <i class="ti ti-stethoscope"></i> Entrar como Dra. Andrea Soto (Especialista)
+            </a>
+        </div>
     </div>
-  </div>
-</div>
 {% endblock %}

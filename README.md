@@ -1,85 +1,119 @@
-# Somos Sensoriales · Sistema de reserva de horas
+# Gestión Sensorial — Versión Definitiva
+> **"Recordando mi espectro"** · Plataforma Web Clínica y de Integración Sensorial
 
-Prototipo del sistema de reserva de citas para el centro terapéutico
-**"Aquí Somos Sensoriales"**. Proyecto de la asignatura Ingeniería de Software
-(INACAP), Evaluación 3.
+---
 
-Equipo: Tomás Torres, Germán Bastidas y Esteban Morales.
+## 🎯 Descripción del Proyecto
+Esta es la **versión definitiva y unificada** del proyecto **Gestión Sensorial**, resultado de fusionar e integrar armónicamente las fortalezas de las dos versiones preexistentes:
 
-## ¿Qué hace?
+1. **La solidez arquitectónica, de seguridad y patrones de software de `somos-sensoriales`:**
+   - **Patrón Singleton:** Modelo `CentroTerapeutico` centralizado para parámetros clínicos (bloques de 45 min, 24 hrs de cancelación).
+   - **Patrón Observer:** Señal Django `cita_cambiada` con observadores automáticos para notificaciones y registro inmutable de auditoría.
+   - **Patrón Factory:** Módulo `crear_aviso(canal)` para despacho multicanal (`AvisoApp`, `AvisoCorreo`, ampliable a WhatsApp/SMS).
+   - **Control de Concurrencia Atómica:** Bloqueo y actualización atómica en base de datos (`transaction.atomic()` + `update(disponible=False)`) que previene doble reserva simultánea (*double-booking*).
+   - **Seguridad Normativa y Ciberseguridad:** Protección contra ataques de fuerza bruta en login (5 intentos en 15 min), auditoría inmutable de accesos según Ley 21.459, y cumplimiento del derecho de supresión de datos personales (Ley 21.719).
 
-- **Pacientes (o sus tutores):** se registran, piden horas con un especialista,
-  ven sus citas y pueden cancelarlas con 24 horas de anticipación.
-- **Especialistas:** publican sus horarios de 45 minutos, confirman o rechazan
-  solicitudes, cancelan (casos excepcionales) y reagendan citas.
-- **Administrador:** crea, edita y desactiva cuentas desde `/admin/` y revisa la
-  auditoría.
-- El sistema **no permite que dos pacientes reserven el mismo horario** y avisa
-  cada cambio en la aplicación y por correo.
+2. **La riqueza clínica, UI responsiva y experiencia de usuario de los Mockups y `GestionSensorial`:**
+   - **Ficha Médica Sensorial Protegida por PIN:** Acceso confidencial de 4 dígitos (predeterminado `1234`) para resguardar diagnósticos y antecedentes médicos.
+   - **Gestión de Diagnósticos con PDF:** Emisión, visualización y descarga de informes diagnósticos (TEA Nivel 1, Sensibilidad Auditiva, Evaluaciones Conductuales, TDAH, Fonoaudiología) asociados a documentos PDF reales.
+   - **Perfil Sensorial en Reservas:** Campo especializado para notas de hipersensibilidad (auditiva, táctil), requerimientos de luz y límites de tiempo en cada cita.
+   - **Interfaz Gráfica Responsiva Completa:** Barra lateral (*sidebar*) contextual según rol, topbar con atajos demo, tarjeta destacada *"Próxima Cita"* (con alarma e indicador de urgencia), *action tiles* interactivos y modales Bootstrap 5 para cancelación y reagendación.
+   - **Canal de Contacto con Administración:** Comunicación directa para solicitudes de permisos, ajustes de agenda o incidencias clínicas.
 
-## Tecnologías
+---
 
-Python 3.13 · Django 5.2 LTS · Bootstrap 5 · SQLite (desarrollo) ·
-PostgreSQL (producción) · GitHub Actions (CI) · Render (PaaS)
+## 🏛️ Estructura del Proyecto
 
-## Cómo ejecutarlo en tu computador
+```text
+GestionSensorial_Definitivo/
+├── config/                  # Configuración central del proyecto (settings, urls, wsgi)
+├── usuarios/                # Modelo Usuario unificado (AbstractUser), roles, auditoría y seguridad
+├── agenda/                  # CentroTerapeutico (Singleton), BloqueHorario, Cita y control atómico
+├── clinica/                 # Diagnostico con PDF, Ficha protegida con PIN y solicitudes administrativas
+├── notificaciones/          # Patrón Factory (avisos) y Observer (receptores de señal)
+├── templates/               # Plantillas HTML5 responsivas con Bootstrap 5 y Tabler Icons
+│   ├── base.html            # Layout maestro con sidebar y topbar
+│   ├── base_auth.html       # Layout de autenticación con identidad visual
+│   ├── usuarios/            # Login, registro y mi cuenta (supresión Ley 21.719)
+│   ├── agenda/              # Dashboard paciente, directorio especialistas, horarios, mis citas, mi agenda
+│   ├── clinica/             # Ficha con PIN gate, listado de pacientes, subida de diagnóstico, historial
+│   └── notificaciones/      # Buzón de avisos
+├── static/                  # CSS personalizado, Bootstrap local, iconos y assets gráficos
+├── media/                   # Informes diagnósticos y archivos PDF
+├── tests/                   # Suite automatizada de pruebas unitarias y de integración
+├── docs/                    # Diagramas de arquitectura UML, casos de uso y estados
+├── manage.py                # CLI de Django
+├── cargar_demo.py           # Script para poblar la base de datos con casos de prueba
+└── requirements.txt         # Dependencias del proyecto
+```
 
+---
+
+## 🚀 Puesta en Marcha Rápida
+
+### 1. Requisitos Previos
+- Python 3.10+ (probado con Python 3.14 y Django 6.1 / 5.2).
+
+### 2. Instalación de Dependencias
 ```bash
-python -m venv venv
-venv\Scripts\activate          # en Windows  (en Mac/Linux: source venv/bin/activate)
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
+```
+
+### 3. Migraciones y Base de Datos
+```bash
+python manage.py makemigrations usuarios agenda clinica notificaciones
 python manage.py migrate
-python manage.py cargar_demo   # crea usuarios y horarios de ejemplo
+```
+
+### 4. Cargar Datos de Demostración
+```bash
+python cargar_demo.py
+```
+
+### 5. Iniciar el Servidor de Desarrollo
+```bash
 python manage.py runserver
 ```
+Accede en tu navegador a: **`http://127.0.0.1:8000/`**
 
-Abre http://127.0.0.1:8000 y entra con uno de estos usuarios
-(contraseña: `Sensorial2026!`):
+---
 
-| Usuario | Correo | Rol |
-|---|---|---|
-| Ana García | ana.garcia@correo.cl | Paciente |
-| Sofía Ramírez | sofia.ramirez@somossensoriales.cl | Especialista |
-| Admin | admin@somossensoriales.cl | Administrador (`/admin/`) |
+## 🔑 Credenciales de Acceso Demo
 
-## Pruebas
+| Rol | Correo / Usuario | Contraseña | PIN Ficha |
+| :--- | :--- | :--- | :--- |
+| **Paciente** | `camila.rojas@correo.cl` (*o `camila_rojas`*) | `password123` | `1234` |
+| **Especialista** | `andrea.soto@somossensoriales.cl` (*o `andrea_soto`*) | `password123` | N/A |
+| **Administrador** | `admin` | `admin123` | N/A |
+
+> 💡 *En el encabezado superior de la plataforma tienes un menú desplegable de **"Atajos Demo"** para iniciar sesión instantáneamente con un solo clic.*
+
+---
+
+## 🧪 Ejecución de Pruebas Automatizadas
+
+El proyecto incluye 14 pruebas que cubren concurrencia, patrones de diseño, seguridad y funcionalidades clínicas:
 
 ```bash
-coverage run manage.py test tests
-coverage report
+# Ejecutar todas las pruebas unitarias:
+python manage.py test tests
+
+# Ejecutar verificación funcional exhaustiva de rutas HTTP:
+python tests/verificar_todo.py
 ```
 
-Las mismas pruebas se ejecutan solas en GitHub Actions en cada `push`
-(archivo `.github/workflows/ci.yml`), junto con Bandit (seguridad del código)
-y pip-audit (librerías con vulnerabilidades).
+---
 
-## Estructura
+## 📤 Instrucciones para Git Push
 
+Para inicializar y subir este proyecto definitivo a tu repositorio:
+
+```bash
+cd C:\Users\Esteban\Downloads\GestionSensorial_Definitivo
+git init
+git add .
+git commit -m "feat: Version definitiva unificada de Gestion Sensorial"
+git branch -M main
+git remote add origin <URL_DE_TU_REPOSITORIO_GITHUB>
+git push -u origin main
 ```
-config/          settings.py (configuración), urls.py
-usuarios/        Usuario, login con bloqueo, registro, auditoría, control de acceso
-agenda/          CentroTerapeutico (Singleton), BloqueHorario, Cita, señal cita_cambiada
-notificaciones/  avisos en la app y por correo (Observer + Factory)
-templates/       pantallas HTML con Bootstrap 5
-tests/           pruebas automáticas
-docs/            diagramas UML, evidencias de pruebas y registro de defectos
-```
-
-## Despliegue en Render
-
-1. Subir el repositorio a GitHub.
-2. En Render: **New → Blueprint** y elegir el repositorio (usa `render.yaml`).
-3. Escribir la variable `DEMO_PASSWORD` en el panel de Render.
-
-Render crea la base de datos PostgreSQL, genera la clave secreta y despliega
-solo cuando el CI de GitHub pasó.
-
-## Seguridad (resumen)
-
-- Contraseñas con hash PBKDF2 y mínimo 10 caracteres.
-- Bloqueo de 15 minutos tras 5 intentos fallidos de inicio de sesión.
-- La sesión se cierra tras 30 minutos sin uso.
-- Cada vista revisa el rol y solo muestra datos del dueño (OWASP A01).
-- HTTPS obligatorio, HSTS y cookies seguras en producción.
-- Registro de auditoría que nadie puede editar (Ley 21.459).
-- Los secretos se leen de variables de entorno, nunca del código.

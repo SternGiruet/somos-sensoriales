@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Herramienta de línea de comandos de Django (runserver, migrate, test, etc.)."""
+"""Herramienta de línea de comandos de Django para Gestión Sensorial."""
 import os
 import sys
 

@@ -1,8 +1,9 @@
 from django.contrib import admin
-
 from .models import Notificacion
 
 
 @admin.register(Notificacion)
 class NotificacionAdmin(admin.ModelAdmin):
-    list_display = ["fecha", "usuario", "mensaje", "leida"]
+    list_display = ["usuario", "mensaje", "leida", "fecha"]
+    list_filter = ["leida", "fecha"]
+    search_fields = ["usuario__first_name", "usuario__last_name", "mensaje"]

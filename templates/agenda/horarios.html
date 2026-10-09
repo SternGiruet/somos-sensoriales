@@ -1,29 +1,109 @@
-{% extends "base.html" %}
-{% block titulo %}Horarios disponibles{% endblock %}
-{% block contenido %}
-<h1 class="h3">Horarios de {{ especialista }}</h1>
-<p class="text-muted">{{ especialista.especialidad }} · Cada sesión dura 45 minutos.</p>
+{% extends 'base.html' %}
 
-<div class="row g-3">
-  {% for bloque in bloques %}
-  <div class="col-md-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h6 mb-2">{{ bloque.inicio|date:"l d-m-Y" }}</h2>
-        <p class="fs-5 mb-3">{{ bloque.inicio|time:"H:i" }} a {{ bloque.fin|time:"H:i" }}</p>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="bloque_id" value="{{ bloque.id }}">
-          <label class="form-label small" for="motivo-{{ bloque.id }}">{{ form.motivo.label }}</label>
-          <textarea class="form-control mb-2" id="motivo-{{ bloque.id }}" name="motivo" rows="2" maxlength="300"></textarea>
-          <button class="btn btn-primary w-100">Pedir esta hora</button>
-        </form>
-      </div>
+{% block title %}Horarios de {{ especialista.nombre_completo_con_titulo }}{% endblock %}
+{% block page_title %}Solicitud de Hora de Atención{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Ficha del Especialista -->
+    <div class="col-lg-4">
+        <div class="card-gs">
+            <div class="card-gs-header">
+                <h4 class="card-gs-title fs-6">
+                    <i class="ti ti-stethoscope text-primary"></i> Especialista Seleccionado
+                </h4>
+            </div>
+            <div class="card-gs-body text-center">
+                <div class="user-avatar-circle mx-auto mb-3" style="width:56px; height:56px; font-size:1.2rem; background-color: {{ especialista.color_avatar }};">
+                    {{ especialista.iniciales }}
+                </div>
+                <h5 class="fw-bold text-primary mb-1">{{ especialista.nombre_completo_con_titulo }}</h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary mb-3">{{ especialista.especialidad }}</span>
+                <p class="small text-muted text-start mb-3" style="line-height:1.5;">{{ especialista.biografia }}</p>
+                <div class="text-start border-top pt-2 small text-muted">
+                    <div><i class="ti ti-calendar"></i> <strong>Atención:</strong> {{ especialista.dias_atencion }}</div>
+                    {% if especialista.telefono %}
+                    <div class="mt-1"><i class="ti ti-phone"></i> <strong>Teléfono:</strong> {{ especialista.telefono }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  {% empty %}
-  <p>Este especialista no tiene horarios libres por ahora.</p>
-  {% endfor %}
+
+    <!-- Bloques Libres y Formulario -->
+    <div class="col-lg-8">
+        <div class="card-gs">
+            <div class="card-gs-header">
+                <h3 class="card-gs-title">
+                    <i class="ti ti-clock text-primary"></i> Horarios Disponibles (Bloques de 45 min)
+                </h3>
+                <a href="{% url 'agenda:especialistas' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="ti ti-arrow-left"></i> Cambiar Especialista
+                </a>
+            </div>
+            <div class="card-gs-body">
+                {% if bloques %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <p class="small text-muted mb-3">
+                            Selecciona uno de los horarios disponibles para tu sesión de integración sensorial:
+                        </p>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-primary letter-spacing-1">
+                                1. Selecciona el Bloque Horario
+                            </label>
+                            <div class="row g-2">
+                                {% for b in bloques %}
+                                <div class="col-sm-6">
+                                    <div class="form-check p-3 border rounded-3 bg-light">
+                                        <input class="form-check-input" type="radio" name="bloque_id" id="bloque_{{ b.id }}" value="{{ b.id }}" {% if forloop.first %}checked{% endif %} required>
+                                        <label class="form-check-label w-100 cursor-pointer" for="bloque_{{ b.id }}">
+                                            <div class="fw-bold text-primary">{{ b.inicio|date:"l d-m-Y" }}</div>
+                                            <div class="text-muted small">
+                                                <i class="ti ti-clock"></i> {{ b.inicio|time:"H:i" }} hrs a {{ b.fin|time:"H:i" }} hrs
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-primary letter-spacing-1">
+                                2. Motivo de Consulta
+                            </label>
+                            {{ form.motivo }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-primary letter-spacing-1">
+                                3. Perfil Sensorial y Adaptaciones Previas (Recomendado)
+                            </label>
+                            {{ form.mensaje_sensorial }}
+                            <div class="form-text small text-muted">
+                                Ej: "Paciente con diagnóstico TEA nivel 1. Presenta sensibilidad auditiva moderada y dificultad en regulación emocional. Se recomienda ambiente controlado y sesión de máx. 45 min."
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                            <a href="{% url 'agenda:especialistas' %}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-gs-primary">
+                                <i class="ti ti-calendar-check fs-5"></i> Confirmar Solicitud de Hora
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
+                        <h5>No hay horarios libres en este momento</h5>
+                        <p class="small">El especialista aún no ha publicado bloques para los próximos días. Intenta más tarde o consulta con otro profesional.</p>
+                        <a href="{% url 'agenda:especialistas' %}" class="btn btn-sm btn-outline-primary">Ver otros especialistas</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
-<a class="btn btn-link mt-3" href="{% url 'agenda:especialistas' %}">← Volver a especialistas</a>
 {% endblock %}

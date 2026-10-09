@@ -1,33 +1,101 @@
 {% extends "base.html" %}
-{% block titulo %}Mi cuenta{% endblock %}
-{% block contenido %}
-<h1 class="h3 mb-3">Mi cuenta</h1>
-<div class="card mb-4">
-  <div class="card-body">
-    <p class="mb-1"><strong>Nombre:</strong> {{ user.get_full_name }}</p>
-    <p class="mb-1"><strong>Correo:</strong> {{ user.email }}</p>
-    <p class="mb-1"><strong>Rol:</strong> {{ user.get_rol_display }}</p>
-    {% if user.rol == "PACIENTE" %}
-      <p class="mb-1"><strong>RUT:</strong> {{ user.rut }}</p>
-      {% if user.nombre_tutor %}<p class="mb-1"><strong>Tutor:</strong> {{ user.nombre_tutor }}</p>{% endif %}
-      <p class="mb-0"><strong>Aceptó el uso de datos el:</strong> {{ user.fecha_consentimiento|date:"d-m-Y H:i" }}</p>
-    {% endif %}
-  </div>
-</div>
 
-{% if user.rol == "PACIENTE" %}
-<div class="card border-danger">
-  <div class="card-body">
-    <h2 class="h5 text-danger">Eliminar mis datos personales</h2>
-    <p>Se borran tus datos personales y se cancelan tus citas futuras. Las citas pasadas quedan sin tu nombre. Esta acción no se puede deshacer.</p>
-    <form method="post" action="{% url 'usuarios:eliminar_cuenta' %}" class="row g-2">
-      {% csrf_token %}
-      <div class="col-sm-8">
-        <input class="form-control" name="confirmacion" placeholder="Escribe ELIMINAR para confirmar" required>
+{% block title %}Mi Cuenta{% endblock %}
+{% block page_title %}Configuración de Cuenta & Privacidad{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card-gs">
+      <div class="card-gs-header">
+        <h4 class="card-gs-title fs-6">
+          <i class="ti ti-id text-primary"></i> Mis Datos Registrados
+        </h4>
       </div>
-      <div class="col-sm-4"><button class="btn btn-danger w-100">Eliminar mis datos</button></div>
-    </form>
+      <div class="card-gs-body">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div class="user-avatar-circle" style="width:52px; height:52px; font-size:1.2rem; background-color: {{ usuario.color_avatar }};">
+            {{ usuario.iniciales }}
+          </div>
+          <div>
+            <h5 class="fw-bold text-primary mb-0">{{ usuario.nombre_completo_con_titulo }}</h5>
+            <span class="badge bg-primary bg-opacity-10 text-primary">{{ usuario.get_rol_display }}</span>
+          </div>
+        </div>
+
+        <table class="table table-sm table-borderless">
+          <tbody>
+            <tr>
+              <td class="text-muted fw-bold" style="width: 35%;">Correo:</td>
+              <td>{{ usuario.email }}</td>
+            </tr>
+            <tr>
+              <td class="text-muted fw-bold">Teléfono:</td>
+              <td>{{ usuario.telefono|default:"No informado" }}</td>
+            </tr>
+            {% if usuario.rut %}
+            <tr>
+              <td class="text-muted fw-bold">RUT:</td>
+              <td>{{ usuario.rut }}</td>
+            </tr>
+            {% endif %}
+            {% if usuario.nombre_tutor %}
+            <tr>
+              <td class="text-muted fw-bold">Tutor:</td>
+              <td>{{ usuario.nombre_tutor }} ({{ usuario.telefono_tutor }})</td>
+            </tr>
+            {% endif %}
+            {% if usuario.especialidad %}
+            <tr>
+              <td class="text-muted fw-bold">Especialidad:</td>
+              <td>{{ usuario.especialidad }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td class="text-muted fw-bold">Fecha Registro:</td>
+              <td>{{ usuario.date_joined|date:"d-m-Y H:i" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card-gs border-danger">
+      <div class="card-gs-header bg-danger bg-opacity-10">
+        <h4 class="card-gs-title text-danger fs-6">
+          <i class="ti ti-shield-lock"></i> Privacidad y Derechos del Paciente (Ley 21.719)
+        </h4>
+      </div>
+      <div class="card-gs-body">
+        <p class="small text-muted mb-3">
+          Tienes derecho a solicitar la <strong>supresión total de tus datos personales</strong> en cualquier momento. Al hacerlo:
+        </p>
+        <ul class="small text-muted mb-3">
+          <li>Se cancelarán automáticamente tus citas futuras para liberar los horarios.</li>
+          <li>Tus datos personales y de contacto se eliminarán definitivamente.</li>
+          <li>Las citas históricas se conservarán desvinculadas de tu identidad con fines de auditoría médica.</li>
+        </ul>
+
+        {% if usuario.rol == "PACIENTE" %}
+        <form method="post" action="{% url 'usuarios:eliminar_cuenta' %}" class="p-3 bg-light rounded-3 border">
+          {% csrf_token %}
+          <label class="form-label small fw-bold text-danger">
+            Para ejercer tu derecho de supresión, escribe la palabra <strong>ELIMINAR</strong>:
+          </label>
+          <div class="input-group mb-2">
+            <input class="form-control form-control-sm" name="confirmacion" placeholder="ELIMINAR" required>
+            <button class="btn btn-danger btn-sm" type="submit">Eliminar mis datos</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="alert alert-info py-2 small mb-0">
+          Las cuentas de especialistas y administradores son gestionadas por la dirección clínica.
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
-{% endif %}
 {% endblock %}

@@ -1,54 +1,214 @@
-{% load static %}<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titulo %}Somos Sensoriales{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestión Sensorial{% endblock %} - Recordando mi espectro</title>
+    
+    <!-- Google Fonts: Nunito & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-light">
+<body>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
 
-{% if user.is_authenticated %}
-<nav class="navbar navbar-expand-md navbar-dark bg-marca mb-4">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">Somos Sensoriales</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-            aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="menu">
-      <ul class="navbar-nav me-auto">
-        {% if user.rol == "PACIENTE" %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'agenda:mis_citas' %}">Mis citas</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'agenda:especialistas' %}">Pedir hora</a></li>
-        {% elif user.rol == "ESPECIALISTA" %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'agenda:mi_agenda' %}">Mi agenda</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'agenda:disponibilidad' %}">Mis horarios</a></li>
-        {% endif %}
-        <li class="nav-item"><a class="nav-link" href="{% url 'notificaciones:lista' %}">Avisos</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:mi_cuenta' %}">Mi cuenta</a></li>
-      </ul>
-      <span class="navbar-text me-3">{{ user }} ({{ user.get_rol_display }})</span>
-      <form method="post" action="{% url 'usuarios:logout' %}">
-        {% csrf_token %}
-        <button class="btn btn-outline-light btn-sm">Cerrar sesión</button>
-      </form>
+    <div class="app-wrapper">
+        <!-- ── SIDEBAR DE NAVEGACIÓN ────────────────────────────────────── -->
+        <aside class="app-sidebar" id="appSidebar">
+            <!-- Brand / Logotipo -->
+            <div class="sidebar-header">
+                <a href="{% url 'inicio' %}" class="brand-badge">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo" class="brand-logo-img">
+                    <div class="brand-text">
+                        <h1>{{ app_nombre }}</h1>
+                        <p>{{ app_eslogan }}</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Usuario Activo -->
+            {% if request.user.is_authenticated %}
+            <div class="sidebar-user">
+                <div class="user-avatar-circle" style="background-color: {{ request.user.color_avatar|default:'#d6e8f8' }};">
+                    {{ request.user.iniciales|default:"GS" }}
+                </div>
+                <div class="user-meta">
+                    <h4>{{ request.user.nombre_completo_con_titulo }}</h4>
+                    {% if es_especialista %}
+                        <span class="user-role-badge"><i class="ti ti-shield-check"></i> Especialista</span>
+                    {% elif es_paciente %}
+                        <span class="user-role-badge"><i class="ti ti-user-check"></i> Paciente</span>
+                    {% else %}
+                        <span class="user-role-badge"><i class="ti ti-shield-lock"></i> Administrador</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Navegación Contextual según Rol -->
+            <nav class="sidebar-nav">
+                {% if es_paciente %}
+                    <div class="nav-section-title">Atención Sensorial</div>
+                    <a href="{% url 'agenda:dashboard_paciente' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'dashboard_paciente' %}active{% endif %}">
+                        <i class="ti ti-layout-dashboard"></i>
+                        <span>Panel Principal</span>
+                    </a>
+                    <a href="{% url 'agenda:especialistas' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'especialistas' or request.resolver_match.url_name == 'horarios' %}active{% endif %}">
+                        <i class="ti ti-calendar-plus"></i>
+                        <span>Pedir Hora</span>
+                    </a>
+                    <a href="{% url 'agenda:mis_citas' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'mis_citas' %}active{% endif %}">
+                        <i class="ti ti-history"></i>
+                        <span>Mis Citas</span>
+                        {% if citas_pendientes_count > 0 %}
+                            <span class="nav-badge">{{ citas_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="nav-section-title">Salud & Ficha Clínica</div>
+                    <a href="{% url 'clinica:ficha_paciente' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'ficha_paciente' %}active{% endif %}">
+                        <i class="ti ti-id-badge"></i>
+                        <span>Ficha del Paciente</span>
+                        <i class="ti ti-lock ms-auto fs-6 opacity-75 text-warning" title="Protegido con PIN"></i>
+                    </a>
+                {% elif es_especialista %}
+                    <div class="nav-section-title">Gestión Terapéutica</div>
+                    <a href="{% url 'agenda:mi_agenda' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'mi_agenda' %}active{% endif %}">
+                        <i class="ti ti-calendar-event"></i>
+                        <span>Mi Agenda de Citas</span>
+                        {% if citas_pendientes_count > 0 %}
+                            <span class="nav-badge">{{ citas_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'agenda:disponibilidad' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'disponibilidad' %}active{% endif %}">
+                        <i class="ti ti-clock-plus"></i>
+                        <span>Mis Horarios (Bloques)</span>
+                    </a>
+                    <a href="{% url 'clinica:diagnosticos_especialista' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'diagnosticos_especialista' or request.resolver_match.url_name == 'subir_diagnostico' %}active{% endif %}">
+                        <i class="ti ti-file-certificate"></i>
+                        <span>Diagnósticos & Fichas</span>
+                    </a>
+                    <a href="{% url 'clinica:historial_clinico' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'historial_clinico' %}active{% endif %}">
+                        <i class="ti ti-history"></i>
+                        <span>Historial de Sesiones</span>
+                    </a>
+                    
+                    <div class="nav-section-title">Institucional</div>
+                    <a href="{% url 'clinica:contacto' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'contacto' %}active{% endif %}">
+                        <i class="ti ti-mail-forward"></i>
+                        <span>Contacto Administración</span>
+                    </a>
+                {% endif %}
+
+                <div class="nav-section-title">Mi Cuenta</div>
+                <a href="{% url 'notificaciones:lista' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'lista' %}active{% endif %}">
+                    <i class="ti ti-bell"></i>
+                    <span>Avisos del Sistema</span>
+                    {% if notificaciones_no_leidas_count > 0 %}
+                        <span class="nav-badge bg-warning text-dark">{{ notificaciones_no_leidas_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'usuarios:mi_cuenta' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'mi_cuenta' %}active{% endif %}">
+                    <i class="ti ti-user-cog"></i>
+                    <span>Configuración de Cuenta</span>
+                </a>
+
+                {% if es_admin %}
+                    <div class="nav-section-title">Administración</div>
+                    <a href="{% url 'admin:index' %}" class="nav-link-custom">
+                        <i class="ti ti-settings"></i>
+                        <span>Panel Django Admin</span>
+                    </a>
+                {% endif %}
+            </nav>
+
+            <!-- Footer con Salida -->
+            <div class="sidebar-footer">
+                <form method="post" action="{% url 'usuarios:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="ti ti-logout"></i>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- ── CONTENEDOR PRINCIPAL ─────────────────────────────────────── -->
+        <main class="app-main">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleSidebar()">
+                        <i class="ti ti-menu-2 fs-5"></i>
+                    </button>
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Gestión Sensorial · Versión Definitiva</span>
+                        <h2 class="h5 mb-0 fw-bold text-primary">{% block page_title %}Plataforma Clínica{% endblock %}</h2>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Selector Rápido de Roles Demo -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
+                            <i class="ti ti-switch-horizontal"></i>
+                            <span class="d-none d-sm-inline">Atajos Demo</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li><h6 class="dropdown-header">Conmutar usuario demo:</h6></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'usuarios:demo_paciente' %}"><i class="ti ti-user text-primary"></i> Camila Rojas (Paciente)</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'usuarios:demo_especialista' %}"><i class="ti ti-stethoscope text-success"></i> Dra. Andrea Soto (Especialista)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Botón de Avisos -->
+                    <a href="{% url 'notificaciones:lista' %}" class="btn btn-sm btn-light border position-relative" title="Avisos">
+                        <i class="ti ti-bell"></i>
+                        {% if notificaciones_no_leidas_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                        {% endif %}
+                    </a>
+                </div>
+            </header>
+
+            <!-- Contenido y Alertas -->
+            <div class="content-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 mb-4" role="alert">
+                            <i class="ti ti-info-circle fs-5"></i>
+                            <div>{{ message }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
-  </div>
-</nav>
-{% endif %}
 
-<main class="container pb-5">
-  {% for mensaje in messages %}
-    <div class="alert {% if mensaje.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="alert">
-      {{ mensaje }}
-    </div>
-  {% endfor %}
-
-  {% block contenido %}{% endblock %}
-</main>
-
-<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Scripts -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('appSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

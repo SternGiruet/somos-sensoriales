@@ -1,16 +1,8 @@
 """
-Patrón Factory (versión simple).
-
-Hay dos formas de avisar: dentro de la aplicación y por correo. Cada una es
-una clase con el mismo método enviar(). La función crear_aviso() recibe el
-nombre del canal y "fabrica" el objeto correcto. Quien la usa no necesita
-saber cómo se envía cada aviso.
-
-Si mañana el centro quiere avisos por WhatsApp, basta con crear la clase
-AvisoWhatsApp y agregarla al diccionario CANALES, sin tocar el resto.
+Patrón Factory para el despacho multicanal de notificaciones.
+Permite extender fácilmente el sistema agregando nuevos canales (WhatsApp, SMS, etc.).
 """
 from django.core.mail import send_mail
-
 from .models import Notificacion
 
 
@@ -21,12 +13,14 @@ class AvisoApp:
 
 class AvisoCorreo:
     def enviar(self, usuario, texto):
-        send_mail(
-            subject="Somos Sensoriales: cambio en tu cita",
-            message=texto,
-            from_email=None,  # usa DEFAULT_FROM_EMAIL de settings.py
-            recipient_list=[usuario.email],
-        )
+        if getattr(usuario, "email", None):
+            send_mail(
+                subject="Gestión Sensorial: Actualización en tu cita",
+                message=texto,
+                from_email=None,
+                recipient_list=[usuario.email],
+                fail_silently=True,
+            )
 
 
 CANALES = {
@@ -36,6 +30,7 @@ CANALES = {
 
 
 def crear_aviso(canal):
+    """Fábrica que instancia el despachador según el canal solicitado."""
     if canal not in CANALES:
         raise ValueError(f"Canal de aviso desconocido: {canal}")
     return CANALES[canal]()

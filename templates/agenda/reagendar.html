@@ -1,19 +1,65 @@
-{% extends "base.html" %}
-{% block titulo %}Reagendar cita{% endblock %}
-{% block contenido %}
-<h1 class="h3">Reagendar cita</h1>
-<p>Paciente: <strong>{{ cita.paciente }}</strong> · Hora actual: {{ cita.bloque.inicio|date:"l d-m-Y H:i" }}</p>
-<form method="post" class="card card-body">
-  {% csrf_token %}
-  <label class="form-label" for="bloque_id">Nuevo horario</label>
-  <select class="form-select mb-3" id="bloque_id" name="bloque_id" required>
-    {% for bloque in bloques %}
-      <option value="{{ bloque.id }}">{{ bloque.inicio|date:"l d-m-Y H:i" }}</option>
-    {% empty %}
-      <option value="">No tienes horarios libres</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-primary">Mover la cita</button>
-</form>
-<a class="btn btn-link mt-2" href="{% url 'agenda:mi_agenda' %}">← Volver a mi agenda</a>
+{% extends 'base.html' %}
+
+{% block title %}Reagendar Cita{% endblock %}
+{% block page_title %}Reagendar Cita N° {{ cita.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card-gs">
+            <div class="card-gs-header">
+                <h4 class="card-gs-title fs-6">
+                    <i class="ti ti-calendar-time text-primary"></i> Reagendación de Cita Clínica
+                </h4>
+                <a href="{% url 'agenda:mi_agenda' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="ti ti-arrow-left"></i> Volver a mi agenda
+                </a>
+            </div>
+            <div class="card-gs-body">
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <div class="fw-bold text-primary">{{ cita.paciente.nombre_completo_con_titulo }}</div>
+                    <div class="text-muted small"><strong>Motivo:</strong> {{ cita.motivo_consulta }}</div>
+                    <div class="text-muted small"><strong>Horario Actual:</strong> {{ cita.bloque.inicio|date:"d-m-Y H:i" }} hrs</div>
+                </div>
+
+                {% if bloques %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <label class="form-label small fw-bold text-primary text-uppercase letter-spacing-1 mb-2">
+                            Selecciona el nuevo bloque disponible:
+                        </label>
+                        <div class="row g-2 mb-4">
+                            {% for b in bloques %}
+                                <div class="col-sm-6">
+                                    <div class="form-check p-3 border rounded-3 bg-white">
+                                        <input class="form-check-input" type="radio" name="bloque_id" id="b_{{ b.id }}" value="{{ b.id }}" {% if forloop.first %}checked{% endif %} required>
+                                        <label class="form-check-label w-100 cursor-pointer" for="b_{{ b.id }}">
+                                            <div class="fw-bold text-primary">{{ b.inicio|date:"d-m-Y" }}</div>
+                                            <div class="text-muted small">{{ b.inicio|time:"H:i" }} hrs a {{ b.fin|time:"H:i" }} hrs</div>
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                            <a href="{% url 'agenda:mi_agenda' %}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-gs-primary">
+                                <i class="ti ti-calendar-check fs-5"></i> Confirmar Reagendación
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
+                        <p class="mb-2">No tienes otros bloques libres para reagendar esta cita.</p>
+                        <a href="{% url 'agenda:disponibilidad' %}" class="btn btn-sm btn-outline-primary">
+                            Publicar nuevos bloques primero
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Paciente{% endblock %}
+{% block page_title %}Mi Espacio Sensorial{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Banner de Bienvenida -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="p-4 rounded-4 text-white shadow-sm" style="background: linear-gradient(135deg, #0d3f7a 0%, #1a5fa8 100%);">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <span class="badge bg-white bg-opacity-25 text-white mb-2 px-3 py-1 text-uppercase letter-spacing-1">
+                            <i class="ti ti-heart-handshake"></i> Área Paciente & Familia
+                        </span>
+                        <h1 class="h3 font-serif fw-bold mb-1">Hola, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+                        <p class="mb-0 text-white-50 small">Bienvenido/a a tu plataforma de atención y seguimiento de integración sensorial.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'agenda:especialistas' %}" class="btn btn-light fw-bold text-primary shadow-sm d-flex align-items-center gap-2">
+                            <i class="ti ti-calendar-plus"></i> Pedir Hora
+                        </a>
+                        <a href="{% url 'clinica:ficha_paciente' %}" class="btn btn-outline-light d-flex align-items-center gap-2">
+                            <i class="ti ti-lock"></i> Mi Ficha Sensorial
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Próxima Cita (Alarm Card del Mockup) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-gs">
+                <div class="card-gs-header">
+                    <h3 class="card-gs-title">
+                        <i class="ti ti-bell-ringing text-primary"></i> Próxima Cita Programada
+                    </h3>
+                    {% if proxima_cita %}
+                        <span class="badge-cita {% if proxima_cita.es_hoy %}badge-cita-hoy{% else %}badge-cita-proxima{% endif %}">
+                            {% if proxima_cita.es_hoy %}¡Hoy!{% else %}{{ proxima_cita.get_estado_display }}{% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="card-gs-body">
+                    {% if proxima_cita %}
+                        <div class="alarm-card-web">
+                            <div class="alarm-icon-wrap">
+                                <i class="ti ti-calendar-event"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="h5 fw-bold text-primary mb-1">{{ proxima_cita.motivo_consulta }}</h4>
+                                <p class="text-muted mb-2">
+                                    <strong>{{ proxima_cita.bloque.especialista.nombre_completo_con_titulo }}</strong> · 
+                                    <span class="text-primary fw-semibold">{{ proxima_cita.bloque.especialista.especialidad }}</span>
+                                </p>
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="alarm-badge-pill">
+                                        <i class="ti ti-calendar"></i> {{ proxima_cita.bloque.inicio|date:"l d M Y" }}
+                                    </span>
+                                    <span class="alarm-badge-pill" style="background:#0d3f7a;">
+                                        <i class="ti ti-clock"></i> {{ proxima_cita.bloque.inicio|time:"H:i" }} hrs ({{ proxima_cita.bloque.fin|time:"H:i" }})
+                                    </span>
+                                    {% if proxima_cita.esta_activa %}
+                                    <form method="post" action="{% url 'agenda:cancelar' proxima_cita.id %}" class="d-inline ms-auto">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="motivo" value="Cancelada por el paciente desde el panel principal">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Seguro/a de cancelar esta cita? Recuerda la regla de 24 horas mínimas.')">
+                                            <i class="ti ti-calendar-cancel"></i> Cancelar Cita
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle p-3 mb-2 text-muted">
+                                <i class="ti ti-calendar-off fs-1"></i>
+                            </div>
+                            <h5 class="fw-bold text-primary mb-1">No tienes citas próximas agendadas</h5>
+                            <p class="text-muted small mb-3">Puedes solicitar una sesión con un terapeuta ocupacional o especialista en cualquier momento.</p>
+                            <a href="{% url 'agenda:especialistas' %}" class="btn btn-gs-primary btn-sm">
+                                <i class="ti ti-calendar-plus"></i> Pedir Hora Ahora
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de Acciones Rápidas (Grid del Mockup adaptado a Web Responsive) -->
+    <h4 class="h6 text-uppercase fw-bold text-muted letter-spacing-1 mb-3">
+        <i class="ti ti-category"></i> Acciones Principales
+    </h4>
+    <div class="row g-3 mb-4">
+        <!-- 1. Pedir Hora -->
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'agenda:especialistas' %}" class="action-tile">
+                <i class="ti ti-calendar-plus"></i>
+                <span>Pedir Hora</span>
+                <span class="tile-sub">Elige especialista y horario</span>
+            </a>
+        </div>
+
+        <!-- 2. Mis Citas -->
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'agenda:mis_citas' %}" class="action-tile">
+                <i class="ti ti-history"></i>
+                <span>Mis Citas</span>
+                <span class="tile-sub">{{ total_citas }} registro(s) en total</span>
+            </a>
+        </div>
+
+        <!-- 3. Ficha del Paciente (Protegida con PIN) -->
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'clinica:ficha_paciente' %}" class="action-tile">
+                <i class="ti ti-id-badge"></i>
+                <span>Ficha del Paciente</span>
+                <span class="tile-sub"><i class="ti ti-lock text-warning"></i> Acceso con PIN de 4 dígitos</span>
+            </a>
+        </div>
+
+        <!-- 4. Avisos y Notificaciones -->
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'notificaciones:lista' %}" class="action-tile">
+                <i class="ti ti-bell"></i>
+                <span>Avisos del Sistema</span>
+                <span class="tile-sub">Notificaciones de citas</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
